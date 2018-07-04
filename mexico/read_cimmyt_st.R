@@ -1,12 +1,16 @@
 library(rjson)
 library(dplyr)
+library(parallel)
 
 catalog <- read.table("clipboard", header=T)
-files <- paste0("http://104.239.241.61:8080/climex/?idst=",catalog[,1],"&yr=",1970:2018)
+files <- paste0("http://104.239.241.61:8080/climex/?idst=",catalog[,1],"&yr=")
+years <- 2018:1982
+x <- expand.grid(files, years)
+files_all <- paste(as.character(x[,1]), x[,2], sep="")
 
 read_cimmyt <- function(files, outDir){
-
-  json_data <- fromJSON(file=files)
+  
+    json_data <- fromJSON(file=files)
   st_name <- substring(files, 41,nchar(files)-8)
   if(length(json_data)>0){
     data_all <- matrix(NA,length(json_data),7 ) %>% as.data.frame
@@ -31,5 +35,10 @@ read_cimmyt <- function(files, outDir){
   cat(" - write whtst output file " , files, "\n")
 }
 
-outDir <- "S:/observed/weather_station/mex-smn/daily-raw"
-lapply(1:length(files),function(k) read_cimmyt(files[k], outDir))
+outDir <- "S:/observed/weather_station/mex-smn/new_2018/daily-raw"
+lapply(1806:length(files_all),function(k) read_cimmyt(files = files_all[k], outDir))
+
+ # cl <- makeCluster(detectCores() - 2) # numero de nucleos proceso en paralelo
+# 
+# clusterMap(cl, read_cimmyt, files = files_all, outDir = outDir, 
+#            .scheduling = 'dynamic')
