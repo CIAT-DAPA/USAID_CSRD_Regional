@@ -3,9 +3,9 @@
 # Script to read weather stations from México
 # Date: July 2018
 
-catalog <- read.csv("S:/observed/weather_station/mex-smn/new_2018/daily-raw/catalog_daily.csv", header=T)
+catalog <- read.table("clipboard", header=T)
 files <- paste0("http://smn.cna.gob.mx/tools/RESOURCES/Diarios/",catalog[,1],".txt")
-var <- c("evap", "tmax", "tmin")
+var <- c("prec", "evap", "tmax", "tmin")
 dir_out <- "S:/observed/weather_station/mex-smn/new_2018/daily-raw"
 
 read_st_mex <- function(files, var, dir_out, cod_st){
@@ -32,12 +32,12 @@ read_st_mex <- function(files, var, dir_out, cod_st){
   dates <- format(as.Date(d_ini[,1], format = "%d/%m/%Y"),"%Y%m%d")
   d_ini[d_ini=="Nulo"] <- NA
   
-   for (v in 1:length(var)) {
-     d_write = as.data.frame(cbind("Date"= dates,"Value" = d_ini[,v+2]))
-     d_write = d_write[!is.na(d_write[,1]),]
-
-    dir.create(paste0(dir_out,"/",var[v],"-per-station"),showWarnings = F)
-    write.table(d_write,paste0(dir_out,"/",var[v],"-per-station/",cod_st,"_raw_",var[v],".txt"),quote = F,row.names = F, sep = "\t")
+  d_write = as.data.frame(cbind("Date"= dates,"Value" = d_ini[,2]))
+  d_write = d_write[!is.na(d_write[,1]),]
+  for (v in var) {
+    
+    dir.create(paste0(dir_out,"/",v,"-per-station"),showWarnings = F)
+    write.table(d_write,paste0(dir_out,"/",v,"-per-station/",cod_st,"_raw_",v,".txt"),quote = F,row.names = F, sep = "\t")
     
   }
   }
@@ -45,4 +45,4 @@ read_st_mex <- function(files, var, dir_out, cod_st){
   }, error=function(e){cat("ERROR :",conditionMessage(e), "\n")}) 
 }
 
-lapply(1:length(files), function (k) read_st_mex(files[k], var, dir_out , cod_st = catalog[k,1]))
+lapply(1956:length(files), function (k) read_st_mex(files[k], var, dir_out , cod_st = catalog[k,1]))
