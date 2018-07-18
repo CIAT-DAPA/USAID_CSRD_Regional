@@ -7,7 +7,7 @@ inDir = "S:/observed/weather_station/mex-smn/new_2018/daily_processed/"
 outDir = "S:/observed/weather_station/mex-smn/new_2018/daily_processed/"
 
 # Define variable
-variable = "tmax"
+variable = "tmin"
 
 # Load data base with all raw stations
 data_station_prec = read.csv(paste0(inDir,"prec_daily_raw.csv"),header = T)
@@ -43,7 +43,7 @@ if(variable=="tmax"){
 }
 
 if( variable=="tmin"){
-  minim = -1 ;maxim = 35; ric = 7; criterio1=15
+  minim = -10 ;maxim = 35; ric = 7; criterio1=15
   
 }
 # apply(data_station_tmax,2,max,na.rm=T)

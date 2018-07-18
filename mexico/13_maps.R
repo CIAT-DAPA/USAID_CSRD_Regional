@@ -22,7 +22,7 @@ outDir = paste0("S:/observed/weather_station/mex-smn/new_2018/daily_processed/qu
 # Load data base with all raw stations catalog with lat and long
 data_station.ini = read.csv(paste0(inDir,variable,"_daily_qc.csv"),header = T)
 
-catalog = read.csv("S:/observed/weather_station/mex-smn/new_2018/catalog_prec.csv",header = T)
+catalog = read.csv("S:/observed/weather_station/mex-smn/new_2018/catalog_tmin.csv",header = T)
 
 # Define period from data
 dates=seq(as.Date("1980/1/1"), as.Date("2017/12/31"), "days") 
@@ -54,7 +54,7 @@ summary_st$datos_faltantes = as.numeric(as.character(summary_st$datos_faltantes)
 map_na = function(summary_st,years,variable,outDir,shape_dir){
   if(variable=="prec"){
     variable_n = "Precipitación"
-    low <- "cyan"; mid <- "blue"; high <- "darkblue"
+    low <- "cyan"; mid <- "green"; high <- "blue"
   }
   if(variable=="tmax"){
     variable_n = "Temperatura máxima"
@@ -69,7 +69,7 @@ map_na = function(summary_st,years,variable,outDir,shape_dir){
   # hnd=extent(-84.7,-89.2,12.9,16)
   # honduras=crop(honduras,hnd)
   honduras<-getData('GADM', country='MEX', level=1)
-  name ="Porcentaje" ; uplimit <- 0; dwlimit <- 60; step <- 10; uplimit_size <- 0; dwlimit_size <- 1; step_size <- 0.1; size = 1.2
+  name ="% NA" ; uplimit <- 0; dwlimit <- 60; step <- 5; uplimit_size <- 0; dwlimit_size <- 1; step_size <- 0.1; size = 1.2
   
   
   honduras@data$id <- rownames(honduras@data)
@@ -78,9 +78,9 @@ map_na = function(summary_st,years,variable,outDir,shape_dir){
   honduras2 <- fortify(honduras, region="id")
   #honduras2<- fortify(honduras, region="id_dpto")
   p <- ggplot(honduras2, aes(x=long,y=lat))
-  p <- p + geom_polygon(aes(fill=hole,group=group),fill="grey 80")
-  p <- p + scale_fill_manual(values=c("grey 80","grey 80"))
-  p <- p + geom_path(aes(long,lat,group=group),color="white",size=0.3)
+  p <- p + geom_polygon(aes(fill=hole,group=group),fill="grey 90")
+  p <- p + scale_fill_manual(values=c("grey 90","grey 90"))
+  p <- p + geom_path(aes(long,lat,group=group),color="black",size=0.3)
   
   p <- p + geom_point(data=summary_st, aes(x=long, y=lat,col=datos_faltantes),size=0.7)#+
     #geom_point(data=summary_st,aes(x=long, y=lat),shape = 1,size = 0.7,colour = "black") 
@@ -96,9 +96,9 @@ map_na = function(summary_st,years,variable,outDir,shape_dir){
                  axis.text=element_text(colour="black",size=10),
                  axis.title=element_text(colour="black",size=12,face="bold"))
   
-  p <- p +labs(title = paste0("Datos faltantes para la variable de ",variable_n," en el período ",years), x = "Longitud", y = "Latitud") 
+  p <- p +labs(title = paste0("Distribución de datos faltantes para la variable de ",variable_n," en el período ",years), x = "Longitud", y = "Latitud") 
   
-  tiff(paste(outDir,"map_faltantes_",variable,"_",years,".tif",sep=""), height=1548,width=2000,res=200,
+  tiff(paste(outDir,"map_faltantes_",variable,"_",years,".tif",sep=""), height=1500,width=2100,res=200,
        pointsize=1.5,compression="lzw")
   print(p)
   dev.off()
@@ -109,41 +109,3 @@ years = paste0(min(unique(format(dates,"%Y"))),"-",max(unique(format(dates,"%Y")
 
 map_na(summary_st=summary_st[summary_st$datos_faltantes<60,],years,variable,outDir,shape_dir)
 
-#########################
-# Barplot missing values by year
-#########################
-
-barplot_na = function(data_station,outDir){
-
-DtSel <- data_station[,colSums(is.na(data_station)) < nrow(data_station)]
-DtSel<- DtSel[,(colSums(is.na(DtSel)) / nrow(DtSel)) < 0.66]  
-
-dates <- paste0(data_station$year, sprintf("%02d", data_station$month), sprintf("%02d", data_station$day) )
-dates <- as.Date(as.character(dates), format = "%Y%m%d")
-
-
-posMt = as.data.frame(matrix(NA, nrow(DtSel), ncol(DtSel)-3))
-nbreaks <- 5
-for(j in 1:ncol(posMt)){ posMt[,j] <- (j - 1) * nbreaks }
-
-# Data transformation
-
-DtSel <- cbind("Date" = dates, DtSel[,4:ncol(DtSel)] * 0 + posMt)
-DtSel_ls <- melt(DtSel, id.vars="Date")
-max <- max(DtSel_ls$value, na.rm = T)
-
-  color="steelblue"
-  
-  
-  tiff(paste(outDir, "/temporal_coverage_", variable,"_na.tif", sep=""), width=1500, height = 2500, pointsize=3, compression='lzw',res=150)
-  
-  p1 <- ggplot(DtSel_ls, aes(x=Date, y=value, group=variable, size=nbreaks)) + geom_line(color=color) +
-    scale_y_continuous(breaks=seq(0, max, nbreaks), labels=substring(unique(DtSel_ls$variable),2,nchar(as.character(unique(DtSel_ls$variable)))), expand = c(0, 0)) + 
-    labs(y = "Estaciones") + #scale_x_date(date_breaks = "2 years", date_labels = "%Y")+
-      theme(legend.position="none")
-  print(p1)
-  dev.off()  
-          
-}
-
-barplot_na(data_station,outDir)
